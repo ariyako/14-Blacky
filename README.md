@@ -1,9 +1,9 @@
 EnsageScripts
 =============
 Wow!
-        Such scripts!
+                Such scripts!
     
-    Much cheat!
+        Much cheat!
     
                   Many win!
                   
