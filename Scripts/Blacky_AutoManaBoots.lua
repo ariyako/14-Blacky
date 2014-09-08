@@ -120,7 +120,7 @@ function Tick(tick)
 
 end
 
-function Frame()
+function Frame()  --TODO: Add a range_display with the range of the mana boots replenish buff, when there are still allies who need to get in the radius
 	if PlayingGame() and me.alive and HasManaBoots() and NeedsMana() and (NearbyPlayersNeedingMana() > 0 or (not ScriptConfig.AutoManaBootsWaitForAllies)) then
 
 		icon.visible = true
