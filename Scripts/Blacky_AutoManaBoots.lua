@@ -15,6 +15,8 @@
 	- Show AOE of mana boots when allies need to come closer
 	
 	Version History:
+	v0.4a
+	- The script will now not try to create an effect even out of game
 	v0.4
 	- Range display can now be deactivated when a teamfight is happening to avoid confusion
 	- Optimized outer range to 2000
@@ -83,9 +85,10 @@ local text         = drawMgr:CreateText(iconx + 50, icony, 0xFFFFFFFF, "", F14)
 local icon         = drawMgr:CreateRect(iconx, icony, 40, 25, 0xCCCCCC, drawMgr:GetTextureId("NyanUI/items/arcane_boots"))
 text.visible = true
 icon.visible = true
-
-local effect_arcaneBootsRange = Effect(me, "range_display")
-effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
+if PlayingGame() then
+	local effect_arcaneBootsRange = Effect(me, "range_display")
+	effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
+end
 
 
 
