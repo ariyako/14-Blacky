@@ -67,7 +67,7 @@ local F12 = drawMgr:CreateFont("F12","Arial",12,500)
 local F13 = drawMgr:CreateFont("F13","Arial",13,500)
 local F14 = drawMgr:CreateFont("F14","Arial",14,500)
 
-local iconx        = 280
+local iconx        = 320
 local icony        = 5
 
 local inDistance   = 580 -- Range of Mana replenish is 600, but I added a 20 range buffer because of possible delay
@@ -86,7 +86,7 @@ effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
 
 function NearbyPlayersNeedingMana()
 	local numberOfPlayersSwag = 0
-	local nearbyPlayers = entityList:FindEntities({type=TYPE_HERO, team=me.team, alive = true})
+	local nearbyPlayers = entityList:FindEntities({type=LuaEntityNPC.TYPE_HERO, team=me.team, alive = true})
 	for i,v in ipairs(nearbyPlayers) do
 		if GetDistance2D(v,me) > inDistance and GetDistance2D(v,me) < outDistance and v.mana<v.maxMana-ScriptConfig:GetParameter("ManaAllies") then
 			numberOfPlayersSwag = numberOfPlayersSwag + 1
@@ -142,7 +142,7 @@ function Frame()  --TODO: Add a range_display with the range of the mana boots r
 
 		icon.visible = true
 		text.visible = true
-		text:SetText(tostring(NearbyPlayersNeedingMana()))
+		text.text = (tostring(NearbyPlayersNeedingMana()))
 		effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
 	else
 
