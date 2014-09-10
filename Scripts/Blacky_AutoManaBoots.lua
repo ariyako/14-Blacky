@@ -13,10 +13,6 @@
 	- Automatically activate Arcane Boots when its on cooldown and you need the mana
 	- Wait for allies that need mana
 	- Show AOE of mana boots when allies need to come closer
-
-	Planned Features:
-	- Adjust the outer distance based on how bad the allies need mana
-	- Drop int and mana items before using Arcanes and pick them up after (if there are no enemies near)
 	
 	Version History:
 	v0.4
