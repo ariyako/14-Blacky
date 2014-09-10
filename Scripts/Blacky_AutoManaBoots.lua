@@ -7,7 +7,7 @@
  |____/|_|\__,_|\___|_|\_\\__, |____//_/   |____|
                            __/ |                 
                           |___/                  
-		Auto Mana Boots v0.4
+		Auto Mana Boots v0.4b
 	
 	Features:
 	- Automatically activate Arcane Boots when its on cooldown and you need the mana
@@ -15,6 +15,8 @@
 	- Show AOE of mana boots when allies need to come closer
 	
 	Version History:
+	v0.4b
+	- Minor bugfix
 	v0.4a
 	- The script will now not try to create an effect even out of game
 	v0.4
@@ -53,9 +55,9 @@ require("libs.ScriptConfig")
 
 
 ScriptConfig = ScriptConfig.new()
-
-local me = entityList:GetMyHero()
-
+if PlayingGame() then
+	local me = entityList:GetMyHero()
+end
 
 --ScriptConfig:SetName("Blacky's Auto Mana Boots")
 ScriptConfig:SetParameter("Enabled", true)
@@ -74,18 +76,19 @@ local F12 = drawMgr:CreateFont("F12","Arial",12,500)
 local F13 = drawMgr:CreateFont("F13","Arial",13,500)
 local F14 = drawMgr:CreateFont("F14","Arial",14,500)
 
-local iconx        = 320
-local icony        = 5
-
-local inDistance   = 580 -- Range of Mana replenish is 600, but I added a 20 range buffer because of possible delay
-local inDistance_shown = inDistance-40 -- this is what the range_display effect on the player will be to avoid misleading and accidentally not getting some heroes in the Mana AOE
-local outDistance  = 2000 -- Maybe reduce to 1200 range, maybe scale range with how bad they need mana (If they are really low on mana the script will wait even if they are further away)
-
-local text         = drawMgr:CreateText(iconx + 50, icony, 0xFFFFFFFF, "", F14)
-local icon         = drawMgr:CreateRect(iconx, icony, 40, 25, 0xCCCCCC, drawMgr:GetTextureId("NyanUI/items/arcane_boots"))
-text.visible = true
-icon.visible = true
 if PlayingGame() then
+	local iconx        = 320
+	local icony        = 5
+
+	local inDistance   = 580 -- Range of Mana replenish is 600, but I added a 20 range buffer because of possible delay
+	local inDistance_shown = inDistance-40 -- this is what the range_display effect on the player will be to avoid misleading and accidentally not getting some heroes in the Mana AOE
+	local outDistance  = 2000 -- Maybe reduce to 1200 range, maybe scale range with how bad they need mana (If they are really low on mana the script will wait even if they are further away)
+
+	local text         = drawMgr:CreateText(iconx + 50, icony, 0xFFFFFFFF, "", F14)
+	local icon         = drawMgr:CreateRect(iconx, icony, 40, 25, 0xCCCCCC, drawMgr:GetTextureId("NyanUI/items/arcane_boots"))
+	text.visible = true
+	icon.visible = true
+
 	local effect_arcaneBootsRange = Effect(me, "range_display")
 	effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
 end
@@ -164,62 +167,64 @@ function Tick(tick)
 end
 
 function Frame()  --TODO: Add a range_display with the range of the mana boots replenish buff, when there are still allies who need to get in the radius
-	local ArcanesCooldown = GetManaBootsCooldown()
-	if not (PlayingGame() and me.alive) then
-		icon.visible = false
-		text.visible = false
-		if  effect_arcaneBootsRange then
-			effect_arcaneBootsRange = false
-			collectgarbage("collect")
+	if PlayingGame() then
+		local ArcanesCooldown = GetManaBootsCooldown()
+		if not me.alive then
+			icon.visible = false
+			text.visible = false
+			if  effect_arcaneBootsRange then
+				effect_arcaneBootsRange = false
+				collectgarbage("collect")
+			end
+		elseif ArcanesCooldown == -1 then
+			icon.visible = false
+			text.visible = false
+			if  effect_arcaneBootsRange then
+				effect_arcaneBootsRange = false
+				collectgarbage("collect")
+			end
+		elseif ArcanesCooldown > 0 then
+			icon.visible = true
+			text.visible = true
+			text.text = "Arcane Boots on cooldown: "..tostring(math.floor(ArcanesCooldown))
+			if  effect_arcaneBootsRange then
+				effect_arcaneBootsRange = false
+				collectgarbage("collect")
+			end
+		elseif not NeedsMana() then
+			icon.visible = true
+			text.visible = true
+			text.text = "Enough Mana"
+			if  effect_arcaneBootsRange then
+				effect_arcaneBootsRange = false
+				collectgarbage("collect")
+			end
+		elseif TeamfightDetection() and ScriptConfig:GetParameter("RangeDisplayTeamfightDetection") then
+			icon.visible = true
+			text.visible = true
+			text.text = "Teamfight! Waiting for allies: "..(tostring(NearbyPlayersNeedingMana())) -- .." "..tostring(TeamfightDetection().x).." "..tostring(TeamfightDetection().y)
+			if  effect_arcaneBootsRange then
+				effect_arcaneBootsRange = false
+				collectgarbage("collect")
+			end
+		elseif NearbyPlayersNeedingMana() > 0 and ScriptConfig:GetParameter("WaitForAllies") then
+			icon.visible = true
+			text.visible = true
+			text.text = "Waiting for allies: "..(tostring(NearbyPlayersNeedingMana()))
+			if not effect_arcaneBootsRange then
+				effect_arcaneBootsRange = Effect(me, "range_display")
+				effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
+			end
+		else  -- THIS SHOULD NEVER HAPPEN!
+			icon.visible = true
+			text.visible = true
+			text.text = "Unexpected Error: ERR001"
+			if  effect_arcaneBootsRange then
+				effect_arcaneBootsRange = false
+				collectgarbage("collect")
+			end
+				
 		end
-	elseif ArcanesCooldown == -1 then
-		icon.visible = false
-		text.visible = false
-		if  effect_arcaneBootsRange then
-			effect_arcaneBootsRange = false
-			collectgarbage("collect")
-		end
-	elseif ArcanesCooldown > 0 then
-		icon.visible = true
-		text.visible = true
-		text.text = "Arcane Boots on cooldown: "..tostring(math.floor(ArcanesCooldown))
-		if  effect_arcaneBootsRange then
-			effect_arcaneBootsRange = false
-			collectgarbage("collect")
-		end
-	elseif not NeedsMana() then
-		icon.visible = true
-		text.visible = true
-		text.text = "Enough Mana"
-		if  effect_arcaneBootsRange then
-			effect_arcaneBootsRange = false
-			collectgarbage("collect")
-		end
-	elseif TeamfightDetection() and ScriptConfig:GetParameter("RangeDisplayTeamfightDetection") then
-		icon.visible = true
-		text.visible = true
-		text.text = "Teamfight! Waiting for allies: "..(tostring(NearbyPlayersNeedingMana())) -- .." "..tostring(TeamfightDetection().x).." "..tostring(TeamfightDetection().y)
-		if  effect_arcaneBootsRange then
-			effect_arcaneBootsRange = false
-			collectgarbage("collect")
-		end
-	elseif NearbyPlayersNeedingMana() > 0 and ScriptConfig:GetParameter("WaitForAllies") then
-		icon.visible = true
-		text.visible = true
-		text.text = "Waiting for allies: "..(tostring(NearbyPlayersNeedingMana()))
-		if not effect_arcaneBootsRange then
-			effect_arcaneBootsRange = Effect(me, "range_display")
-			effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
-		end
-	else  -- THIS SHOULD NEVER HAPPEN!
-		icon.visible = true
-		text.visible = true
-		text.text = "Unexpected Error: ERR001"
-		if  effect_arcaneBootsRange then
-			effect_arcaneBootsRange = false
-			collectgarbage("collect")
-		end
-			
 	end
 end
 
@@ -234,7 +239,7 @@ function GameClose()
 	script:Unload()
 end
 
-print("Blacky's Auto Mana Boots Loaded")
+print("Blacky's Auto Mana Boots v0.4b Loaded")
 
 script:RegisterEvent(EVENT_TICK, Tick)
 script:RegisterEvent(EVENT_FRAME, Frame)
