@@ -7,17 +7,22 @@
  |____/|_|\__,_|\___|_|\_\\__, |____//_/   |____|
                            __/ |                 
                           |___/                  
-		Auto Mana Boots v0.3
+		Auto Mana Boots v0.4
 	
 	Features:
 	- Automatically activate Arcane Boots when its on cooldown and you need the mana
 	- Wait for allies that need mana
+	- Show AOE of mana boots when allies need to come closer
 
 	Planned Features:
 	- Adjust the outer distance based on how bad the allies need mana
 	- Drop int and mana items before using Arcanes and pick them up after (if there are no enemies near)
 	
 	Version History:
+	v0.4
+	- Range display can now be deactivated when a teamfight is happening to avoid confusion
+	- Optimized outer range to 2000
+	- Status text will now show much more information
 	v0.3
 	- Upgraded to the new Ensage version
 	- Migrated from HotkeyConfig to ScriptConfig
@@ -56,9 +61,13 @@ local me = entityList:GetMyHero()
 
 --ScriptConfig:SetName("Blacky's Auto Mana Boots")
 ScriptConfig:SetParameter("Enabled", true)
-ScriptConfig:SetParameter("ManaRequired", 100)
-ScriptConfig:SetParameter("WaitForAllies",true)
-ScriptConfig:SetParameter("ManaAllies", 50)
+ScriptConfig:SetParameter("ManaRequired", 100) --The amount of mana your hero needs to be missing to activate
+ScriptConfig:SetParameter("WaitForAllies",true) -- Will the script wait until all allies that need mana are in arcanes AOE?
+ScriptConfig:SetParameter("ManaAllies", 50) -- The amount of mana the allies need to miss to be waited for.
+ScriptConfig:SetParameter("RangeDisplayTeamfightDetection", true) -- If the script thinks there is a teamfight happening dont show the range_display to avoid confusion
+ScriptConfig:SetParameter("DropItems", true) -- Drop int and mana items before activating arcanes to get more mana out of it 
+ScriptConfig:SetParameter("DropItemsSafeMode", true) -- Dont drop items if there is an enemy nearby
+ScriptConfig:SetParameter("DropItemsSafeModeSearchRange", 800) -- The radius the script will search for enemies in safe item drop mode
 ScriptConfig:Load()
 
 local F10 = drawMgr:CreateFont("F10","Arial",10,500) --TODO: Decide which font is best and remove others!
@@ -72,9 +81,9 @@ local icony        = 5
 
 local inDistance   = 580 -- Range of Mana replenish is 600, but I added a 20 range buffer because of possible delay
 local inDistance_shown = inDistance-40 -- this is what the range_display effect on the player will be to avoid misleading and accidentally not getting some heroes in the Mana AOE
-local outDistance  = 1800 -- Maybe reduce to 1200 range, maybe scale range with how bad they need mana (If they are really low on mana the script will wait even if they are further away)
+local outDistance  = 2000 -- Maybe reduce to 1200 range, maybe scale range with how bad they need mana (If they are really low on mana the script will wait even if they are further away)
 
-local text         = drawMgr:CreateText(iconx + 55, icony, 0xFFFFFFFF, "", F14)
+local text         = drawMgr:CreateText(iconx + 50, icony, 0xFFFFFFFF, "", F14)
 local icon         = drawMgr:CreateRect(iconx, icony, 40, 25, 0xCCCCCC, drawMgr:GetTextureId("NyanUI/items/arcane_boots"))
 text.visible = true
 icon.visible = true
@@ -95,17 +104,15 @@ function NearbyPlayersNeedingMana()
 	return numberOfPlayersSwag
 end
 
-function HasManaBoots()
+function GetManaBootsCooldown()
 	for i = 1,6,1 do
 		if me:HasItem(i) then
 			if me:GetItem(i).name == "item_arcane_boots"  then
-				if me:GetItem(i).cd == 0 then
-					return i
-				end
+				return me:GetItem(i).cd
 			end
 		end
 	end
-	return false
+	return -1
 
 end
 
@@ -125,8 +132,28 @@ function NearFountain()
 
 end
 
+function TeamfightDetection()
+	local nearbyPlayers = entityList:FindEntities({type=LuaEntityNPC.TYPE_HERO, alive = true})
+	local enemiesInRange = 0
+	local alliesInRange = 0
+	for i,v in ipairs(nearbyPlayers) do
+		if GetDistance2D(v,me) <= 1000 then
+			if v.team == me.team and v ~= me then
+				alliesInRange = alliesInRange + 1
+			else
+				enemiesInRange = alliesInRange + 1
+			end
+		end
+	end
+	if alliesInRange >= 2 and enemiesInRange >= 3 then
+		return Vector(alliesInRange,enemiesInRange,0)
+	else
+		return false
+	end
+end
+
 function Tick(tick)
-	if PlayingGame() and me.alive and HasManaBoots() and NeedsMana() and (not me:IsChanneling()) and (not me.invisible) and (not NearFountain()) and SleepCheck("Blacky's Mana Boots") then
+	if PlayingGame() and me.alive and GetManaBootsCooldown() == 0 and NeedsMana() and (not me:IsChanneling()) and (not me.invisible) and (not NearFountain()) and SleepCheck("Blacky's Mana Boots") then
 		
 		if NearbyPlayersNeedingMana() == 0 or (not ScriptConfig:GetParameter("WaitForAllies")) then
 			me:SafeCastItem("item_arcane_boots")
@@ -138,23 +165,78 @@ function Tick(tick)
 end
 
 function Frame()  --TODO: Add a range_display with the range of the mana boots replenish buff, when there are still allies who need to get in the radius
-	if PlayingGame() and me.alive and HasManaBoots() and NeedsMana() and (NearbyPlayersNeedingMana() > 0 or (not ScriptConfig:GetParameter("WaitForAllies"))) then
-
+	local ArcanesCooldown = GetManaBootsCooldown()
+	if not (PlayingGame() and me.alive) then
+		icon.visible = false
+		text.visible = false
+		if  effect_arcaneBootsRange then
+			effect_arcaneBootsRange = false
+			collectgarbage("collect")
+		end
+	elseif ArcanesCooldown == -1 then
+		icon.visible = false
+		text.visible = false
+		if  effect_arcaneBootsRange then
+			effect_arcaneBootsRange = false
+			collectgarbage("collect")
+		end
+	elseif ArcanesCooldown > 0 then
 		icon.visible = true
 		text.visible = true
-		text.text = (tostring(NearbyPlayersNeedingMana()))
-		effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
-	else
-
-			icon.visible = false
-			text.visible = false
-			effect_arcaneBootsRange:SetVector(0,Vector(inDistance_shown,0,0))
+		text.text = "Arcane Boots on cooldown: "..tostring(math.floor(ArcanesCooldown))
+		if  effect_arcaneBootsRange then
+			effect_arcaneBootsRange = false
+			collectgarbage("collect")
+		end
+	elseif not NeedsMana() then
+		icon.visible = true
+		text.visible = true
+		text.text = "Enough Mana"
+		if  effect_arcaneBootsRange then
+			effect_arcaneBootsRange = false
+			collectgarbage("collect")
+		end
+	elseif TeamfightDetection() and ScriptConfig:GetParameter("RangeDisplayTeamfightDetection") then
+		icon.visible = true
+		text.visible = true
+		text.text = "Teamfight! Waiting for allies: "..(tostring(NearbyPlayersNeedingMana())) -- .." "..tostring(TeamfightDetection().x).." "..tostring(TeamfightDetection().y)
+		if  effect_arcaneBootsRange then
+			effect_arcaneBootsRange = false
+			collectgarbage("collect")
+		end
+	elseif NearbyPlayersNeedingMana() > 0 and ScriptConfig:GetParameter("WaitForAllies") then
+		icon.visible = true
+		text.visible = true
+		text.text = "Waiting for allies: "..(tostring(NearbyPlayersNeedingMana()))
+		if not effect_arcaneBootsRange then
+			effect_arcaneBootsRange = Effect(me, "range_display")
+			effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
+		end
+	else  -- THIS SHOULD NEVER HAPPEN!
+		icon.visible = true
+		text.visible = true
+		text.text = "Unexpected Error: ERR001"
+		if  effect_arcaneBootsRange then
+			effect_arcaneBootsRange = false
+			collectgarbage("collect")
+		end
 			
 	end
 end
 
+function GameClose()
+	effect_arcaneBootsRange:SetVector(0,Vector(inDistance_shown,0,0))
+	icon.visible = false
+	text.visible = false
+	effect_arcaneBootsRang = false
+	icon = false
+	text = false
+	collectgarbage("collect")
+	script:Unload()
+end
 
 print("Blacky's Auto Mana Boots Loaded")
 
 script:RegisterEvent(EVENT_TICK, Tick)
 script:RegisterEvent(EVENT_FRAME, Frame)
+script:RegisterEvent(EVENT_CLOSE, GameClose)
