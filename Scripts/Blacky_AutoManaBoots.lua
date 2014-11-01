@@ -1,3 +1,4 @@
+--<< Automatically activates your Arcane Boots under configurable conditions. >>
 --[[  
   ____  _            _          ____ ______ ___  
  |  _ \| |          | |        |___ \____  |__ \ 
@@ -70,10 +71,6 @@ ScriptConfig:SetParameter("DropItemsSafeMode", true) -- Dont drop items if there
 ScriptConfig:SetParameter("DropItemsSafeModeSearchRange", 800) -- The radius the script will search for enemies in safe item drop mode
 ScriptConfig:Load()
 
-local F10 = drawMgr:CreateFont("F10","Arial",10,500) --TODO: Decide which font is best and remove others!
-local F11 = drawMgr:CreateFont("F11","Arial",11,500)
-local F12 = drawMgr:CreateFont("F12","Arial",12,500)
-local F13 = drawMgr:CreateFont("F13","Arial",13,500)
 local F14 = drawMgr:CreateFont("F14","Arial",14,500)
 
 if PlayingGame() then
@@ -82,7 +79,7 @@ if PlayingGame() then
 
 	local inDistance   = 580 -- Range of Mana replenish is 600, but I added a 20 range buffer because of possible delay
 	local inDistance_shown = inDistance-40 -- this is what the range_display effect on the player will be to avoid misleading and accidentally not getting some heroes in the Mana AOE
-	local outDistance  = 2000 -- Maybe reduce to 1200 range, maybe scale range with how bad they need mana (If they are really low on mana the script will wait even if they are further away)
+	local outDistance  = 2000 -- TODO: Scale range with how bad allies need mana (If they are really low on mana the script will wait even if they are further away)
 
 	local text         = drawMgr:CreateText(iconx + 50, icony, 0xFFFFFFFF, "", F14)
 	local icon         = drawMgr:CreateRect(iconx, icony, 40, 25, 0xCCCCCC, drawMgr:GetTextureId("NyanUI/items/arcane_boots"))
@@ -166,7 +163,7 @@ function Tick(tick)
 
 end
 
-function Frame()  --TODO: Add a range_display with the range of the mana boots replenish buff, when there are still allies who need to get in the radius
+function Frame()
 	if PlayingGame() then
 		local ArcanesCooldown = GetManaBootsCooldown()
 		if not me.alive then
