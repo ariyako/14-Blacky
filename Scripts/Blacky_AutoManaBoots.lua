@@ -64,15 +64,29 @@ if PlayingGame() then
 	local me = entityList:GetMyHero()
 end
 
---ScriptConfig:SetName("Blacky's Auto Mana Boots")
+
 ScriptConfig:SetParameter("Enabled", true)
-ScriptConfig:SetParameter("ManaRequired", 100) --The amount of mana your hero needs to be missing to activate
-ScriptConfig:SetParameter("WaitForAllies",true) -- Will the script wait until all allies that need mana are in arcanes AOE?
-ScriptConfig:SetParameter("ManaAllies", 50) -- The amount of mana the allies need to miss to be waited for.
-ScriptConfig:SetParameter("RangeDisplayTeamfightDetection", true) -- If the script thinks there is a teamfight happening dont show the range_display to avoid confusion
-ScriptConfig:SetParameter("DropItems", true) -- Drop int and mana items before activating arcanes to get more mana out of it 
-ScriptConfig:SetParameter("DropItemsSafeMode", true) -- Dont drop items if there is an enemy nearby
-ScriptConfig:SetParameter("DropItemsSafeModeSearchRange", 800) -- The radius the script will search for enemies in safe item drop mode
+ScriptConfig:SetParameter("ManaRequired", 100) 
+--The amount of mana your hero needs to be missing to activate
+
+ScriptConfig:SetParameter("WaitForAllies",true) 
+-- Will the script wait until all allies that need mana are in arcanes AOE?
+
+ScriptConfig:SetParameter("ManaAllies", 50) 
+-- The amount of mana the allies need to miss to be waited for.
+
+ScriptConfig:SetParameter("RangeDisplayTeamfightDetection", true) 
+-- If the script thinks there is a teamfight happening dont show the range_display to avoid confusion
+
+ScriptConfig:SetParameter("DropItems", true) 
+-- Drop int and mana items before activating arcanes to get more mana out of it 
+
+ScriptConfig:SetParameter("DropItemsSafeMode", true) 
+-- Dont drop items if there is an enemy nearby
+
+ScriptConfig:SetParameter("DropItemsSafeModeSearchRange", 800) 
+-- The radius the script will search for enemies in safe item drop mode
+
 ScriptConfig:Load()
 
 local F14 = drawMgr:CreateFont("F14","Arial",14,500)
