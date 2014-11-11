@@ -8,7 +8,7 @@
  |____/|_|\__,_|\___|_|\_\\__, |____//_/   |____|
                            __/ |                 
                           |___/                  
-		Auto Mana Boots v0.4b
+		Auto Mana Boots v0.4c
 	
 	Features:
 	- Automatically activate Arcane Boots when its on cooldown and you need the mana
@@ -16,6 +16,8 @@
 	- Show AOE of mana boots when allies need to come closer
 	
 	Version History:
+	v0.4c
+	- Adjusted minor things to fit the Blacky Script Standard
 	v0.4b
 	- Minor bugfix
 	v0.4a
@@ -50,6 +52,8 @@
 	- Initial Release
 					  
 ]]
+
+__VERSION = "0.4c"
 
 require("libs.Utils")
 require("libs.ScriptConfig")  
@@ -90,7 +94,9 @@ if PlayingGame() then
 	effect_arcaneBootsRange:SetVector(1,Vector(inDistance_shown,0,0))
 end
 
-
+local function _log(message)
+	print("Blacky's Auto Mana Boots v" .. __VERSION .. " -> " .. message)
+end
 
 function NearbyPlayersNeedingMana()
 	local numberOfPlayersSwag = 0
@@ -236,7 +242,7 @@ function GameClose()
 	script:Unload()
 end
 
-print("Blacky's Auto Mana Boots v0.4b Loaded")
+_log("Loaded!")
 
 script:RegisterEvent(EVENT_TICK, Tick)
 script:RegisterEvent(EVENT_FRAME, Frame)
