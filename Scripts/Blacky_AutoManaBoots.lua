@@ -60,10 +60,6 @@ require("libs.ScriptConfig")
 
 
 ScriptConfig = ScriptConfig.new()
-if PlayingGame() then
-	local me = entityList:GetMyHero()
-end
-
 
 ScriptConfig:SetParameter("Enabled", true)
 ScriptConfig:SetParameter("ManaRequired", 100) 
@@ -90,8 +86,10 @@ ScriptConfig:SetParameter("DropItemsSafeModeSearchRange", 800)
 ScriptConfig:Load()
 
 local F14 = drawMgr:CreateFont("F14","Arial",14,500)
-
+local me = nil
 if PlayingGame() then
+	me = entityList:GetMyHero()
+
 	local iconx        = 320
 	local icony        = 5
 

@@ -50,9 +50,9 @@ end
 
 
 function Key(msg, code)
-	if client.chat or client.console or client.loading or not SleepCheck("Blacky's Instant Tether") then return end
+	if client.chat or client.console or client.loading or msg ~= KEY_DOWN or not SleepCheck("Blacky's Instant Tether") then return end
 
-	if IsKeyDown(useKey) and me.name == "npc_dota_hero_wisp"  and me:CanCast() then 
+	if IsKeyDown(useKey) and me.name == "npc_dota_hero_wisp"  and me:CanCast() then --TODO: Maybe replace "IsKeyDown(useKey)" with "code == "useKey" | Needs testing
 
 		if me:FindSpell("wisp_tether"):CanBeCasted() then
 
